@@ -312,42 +312,89 @@ function generate(subTheme, lang) {
 /*__CORE_END__*/
 </script>
 <script>
-// AI-expand — optional, local Ollama only. Hidden unless localhost:11434 responds.
-// On the https GitHub Pages URL the probe fails instantly (mixed content) -> button stays hidden.
+// AI-expand — optional, Ollama-only. Two transports:
+//   (A) LOCAL dev: page served at http://localhost -> talk to Ollama directly (:11434).
+//   (B) ONLINE: hosted https page -> talk to the Bechy AI proxy via its Cloudflare
+//       tunnel, discovered from ./agent_endpoint.json (published by the PC when up).
+// The ✨ button shows if EITHER transport answers. When the PC/tunnel is off online,
+// no endpoint is found -> button stays hidden -> base generator unaffected.
 (function () {
-  var OLLAMA = 'http://localhost:11434';
-  var model = null;
+  var LOCAL = 'http://localhost:11434';
+  var TUNNEL_RE = /^https:\/\/[a-z0-9-]+\.trycloudflare\.com\/?$/;
+  var mode = null;      // 'local' | 'tunnel'
+  var localModel = null;
+  var tunnelUrl = null;
+
   window.initAI = function (lang, getResult, toast) {
     var btn = document.getElementById('btn-ai');
     var extra = document.getElementById('ai-extra');
-    function probe() {
+
+    function tryLocal() {
       var ctl = new AbortController();
       var t = setTimeout(function () { ctl.abort(); }, 1500);
-      fetch(OLLAMA + '/api/tags', { signal: ctl.signal })
+      return fetch(LOCAL + '/api/tags', { signal: ctl.signal })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           clearTimeout(t);
-          if (d && d.models && d.models.length) { model = d.models[0].name; btn.style.display = 'block'; }
+          if (d && d.models && d.models.length) { localModel = d.models[0].name; mode = 'local'; return true; }
+          return false;
         })
-        .catch(function () { clearTimeout(t); });
+        .catch(function () { clearTimeout(t); return false; });
     }
-    btn.onclick = function () {
-      var cur = getResult();
-      if (!cur || !model) return;
-      var isPt = (document.documentElement.lang || 'pt') === 'pt';
-      btn.disabled = true;
-      btn.textContent = isPt ? 'Gerando…' : 'Generando…';
+    function tryTunnel() {
+      return fetch('./agent_endpoint.json', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (!j || !j.url || !TUNNEL_RE.test(j.url)) return false;
+          var url = j.url.replace(/\/$/, '');
+          var ctl = new AbortController();
+          var t = setTimeout(function () { ctl.abort(); }, 4000);
+          return fetch(url + '/health', { signal: ctl.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (h) {
+              clearTimeout(t);
+              if (h && h.status === 'ok') { tunnelUrl = url; mode = 'tunnel'; return true; }
+              return false;
+            })
+            .catch(function () { clearTimeout(t); return false; });
+        })
+        .catch(function () { return false; });
+    }
+    function probe() {
+      tryLocal().then(function (ok) {
+        if (ok) { btn.style.display = 'block'; return; }
+        tryTunnel().then(function (ok2) { if (ok2) btn.style.display = 'block'; });
+      });
+    }
+
+    function requestLocal(cur, isPt) {
       var prompt = 'You help a landscape/travel/nature photographer make Instagram Reels. '
         + 'Reel idea: "' + cur.subThemeName + ' — ' + cur.idea.what + '". '
         + 'Respond ONLY with JSON: {"hooks": [5 short punchy hooks], "captions": [2 caption variations ending with a call-to-action]} '
         + 'in ' + (isPt ? 'Brazilian Portuguese' : 'Spanish') + '.';
-      fetch(OLLAMA + '/api/generate', {
+      return fetch(LOCAL + '/api/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: model, prompt: prompt, stream: false, format: 'json' })
+        body: JSON.stringify({ model: localModel, prompt: prompt, stream: false, format: 'json' })
       })
         .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
-        .then(function (d) {
-          var out = JSON.parse(d.response || '{}');
+        .then(function (d) { return JSON.parse(d.response || '{}'); });
+    }
+    function requestTunnel(cur, isPt) {
+      return fetch(tunnelUrl + '/reels', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subtheme: cur.subThemeName, idea: cur.idea.what, lang: isPt ? 'pt' : 'es' })
+      })
+        .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); });
+    }
+
+    btn.onclick = function () {
+      var cur = getResult();
+      if (!cur || !mode) return;
+      var isPt = (document.documentElement.lang || 'pt') === 'pt';
+      btn.disabled = true;
+      btn.textContent = isPt ? 'Gerando…' : 'Generando…';
+      (mode === 'local' ? requestLocal(cur, isPt) : requestTunnel(cur, isPt))
+        .then(function (out) {
           var hooks = Array.isArray(out.hooks) ? out.hooks : [];
           var caps = Array.isArray(out.captions) ? out.captions : [];
           if (!hooks.length && !caps.length) throw new Error('empty');
