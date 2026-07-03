@@ -35,6 +35,17 @@
   #toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#222833; color:var(--txt); padding:9px 16px; border-radius:20px; font-size:.8rem; opacity:0; transition:opacity .25s; pointer-events:none; box-shadow:0 4px 14px rgba(0,0,0,.5); }
   #toast.show { opacity:1; }
   .hidden { display:none !important; }
+  #btn-saved-toggle { background:transparent; border:1px solid var(--line); color:var(--mut); margin-bottom:14px; font-weight:600; font-size:.82rem; padding:9px; }
+  #saved-panel { margin-bottom:14px; }
+  .fav { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+  .fav-head { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .fav-title { color:var(--acc); font-weight:700; font-size:.8rem; }
+  .fav-meta { color:var(--mut); font-size:.66rem; }
+  .fav-what { font-size:.8rem; color:var(--txt); margin:6px 0; line-height:1.35; }
+  .fav-btns { display:flex; gap:6px; }
+  .fav-btns button { border:1px solid var(--line); background:transparent; color:var(--mut); border-radius:7px; padding:4px 9px; font-size:.7rem; cursor:pointer; }
+  .fav-btns button.open { border-color:var(--acc); color:var(--acc); }
+  .fav-empty { color:var(--mut); font-size:.78rem; text-align:center; padding:14px; }
   footer { text-align:center; color:var(--mut); font-size:.68rem; margin-top:18px; }
 </style>
 </head>
@@ -48,6 +59,8 @@
 </header>
 <div id="chips"></div>
 <button id="btn-generate" class="btn">Gerar ideia ✨</button>
+<button id="btn-saved-toggle" class="btn hidden">⭐ Salvos (0)</button>
+<div id="saved-panel" class="hidden"><div id="saved-list"></div></div>
 <div id="result" class="hidden">
   <div class="block" id="idea-block">
     <h2><span id="t-idea">Ideia</span><button class="copy" data-copy="idea">Copiar</button></h2>
@@ -72,6 +85,7 @@
     <button id="btn-another" class="btn">🎲 Outra ideia</button>
     <button id="btn-rehooks" class="btn">🔁 Outros ganchos</button>
     <button id="btn-share" class="btn">📲 Compartilhar</button>
+    <button id="btn-save" class="btn">💾 Salvar</button>
     <button id="btn-ai" class="btn">✨ Expandir com IA</button>
   </div>
 </div>
@@ -421,13 +435,18 @@ function generate(subTheme, lang) {
           rehooks: '🔁 Outros ganchos', share: '📲 Compartilhar', ai: '✨ Expandir com IA',
           copy: 'Copiar', copied: 'Copiado ✓', idea: 'Ideia', what: 'O que gravar:',
           hooks: 'Ganchos', caption: 'Caption', hashtags: 'Hashtags',
-          shareHint: 'Copiado — cola no Instagram 📲', title: 'Reels da <span>Bechy</span> 📸' },
+          shareHint: 'Copiado — cola no Instagram 📲', title: 'Reels da <span>Bechy</span> 📸',
+          save: '💾 Salvar', saved: '✓ Salvo', savedToggle: '⭐ Salvos', open: 'Abrir',
+          del: '🗑', savedEmpty: 'Nenhuma ideia salva ainda. Gere uma e toque em 💾 Salvar.', removed: 'Removido' },
     es: { generate: 'Generar idea ✨', surprise: '🎲 Sorpréndeme', another: '🎲 Otra idea',
           rehooks: '🔁 Otros ganchos', share: '📲 Compartir', ai: '✨ Expandir con IA',
           copy: 'Copiar', copied: 'Copiado ✓', idea: 'Idea', what: 'Qué grabar:',
           hooks: 'Ganchos', caption: 'Caption', hashtags: 'Hashtags',
-          shareHint: 'Copiado — pégalo en Instagram 📲', title: 'Reels de <span>Bechy</span> 📸' }
+          shareHint: 'Copiado — pégalo en Instagram 📲', title: 'Reels de <span>Bechy</span> 📸',
+          save: '💾 Guardar', saved: '✓ Guardado', savedToggle: '⭐ Guardados', open: 'Abrir',
+          del: '🗑', savedEmpty: 'Aún no hay ideas guardadas. Genera una y toca 💾 Guardar.', removed: 'Eliminado' }
   };
+  var FAV_KEY = 'bechy-favorites', FAV_MAX = 60;
   var lang = 'pt';
   try { lang = localStorage.getItem('bechy-lang') || 'pt'; } catch (e) {}
   if (lang !== 'pt' && lang !== 'es') lang = 'pt';
@@ -482,6 +501,7 @@ function generate(subTheme, lang) {
     $('btn-another').textContent = u.another;
     $('btn-rehooks').textContent = u.rehooks;
     $('btn-share').textContent = u.share;
+    $('btn-save').textContent = u.save;
     $('btn-ai').textContent = u.ai;
     $('t-idea').textContent = u.idea; $('t-hooks').textContent = u.hooks;
     $('t-caption').textContent = u.caption; $('t-hashtags').textContent = u.hashtags;
@@ -506,10 +526,64 @@ function generate(subTheme, lang) {
     current = generate(selectedTheme ? pickSubTheme(selectedTheme) : null, lang);
     renderResult();
   }
+
+  // ---- Favorites (persisted in localStorage; survives reload/offline) ----
+  function loadFavs() {
+    try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]') || []; } catch (e) { return []; }
+  }
+  function saveFavs(arr) {
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(arr.slice(0, FAV_MAX))); } catch (e) {}
+  }
+  function favSig(r) { return (r.subThemeName || '') + '|' + (r.idea && r.idea.what || '') + '|' + (r.caption || ''); }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function addFav(r) {
+    if (!r) return;
+    var favs = loadFavs();
+    var sig = favSig(r);
+    if (favs.some(function (f) { return favSig(f) === sig; })) { toast(UI[lang].saved); return; }
+    favs.unshift({ id: 's' + (favs.length ? (parseInt(favs[0].id.slice(1), 10) + 1) : 1) + '_' + sig.length,
+                   ts: new Date().toISOString().slice(0, 10), lang: lang,
+                   subThemeName: r.subThemeName, idea: r.idea, hooks: r.hooks,
+                   caption: r.caption, hashtags: r.hashtags });
+    saveFavs(favs); renderSaved(); toast(UI[lang].saved);
+  }
+  function removeFav(id) {
+    saveFavs(loadFavs().filter(function (f) { return f.id !== id; }));
+    renderSaved(); toast(UI[lang].removed);
+  }
+  function openFav(id) {
+    var f = loadFavs().filter(function (x) { return x.id === id; })[0];
+    if (!f) return;
+    current = { subThemeId: '', subThemeName: f.subThemeName, idea: f.idea,
+                hooks: f.hooks, caption: f.caption, hashtags: f.hashtags };
+    renderResult();
+    document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function renderSaved() {
+    var favs = loadFavs(), u = UI[lang], tgl = $('btn-saved-toggle');
+    tgl.textContent = u.savedToggle + ' (' + favs.length + ')';
+    tgl.classList.toggle('hidden', favs.length === 0);
+    if (favs.length === 0) $('saved-panel').classList.add('hidden');
+    var list = $('saved-list');
+    if (!favs.length) { list.innerHTML = '<div class="fav-empty">' + u.savedEmpty + '</div>'; return; }
+    list.innerHTML = favs.map(function (f) {
+      return '<div class="fav"><div class="fav-head"><span class="fav-title">' + esc(f.subThemeName)
+        + '</span><span class="fav-meta">' + esc(f.ts) + ' · ' + esc((f.lang || 'pt').toUpperCase()) + '</span></div>'
+        + '<div class="fav-what">' + esc((f.idea && f.idea.what || '').slice(0, 110)) + '</div>'
+        + '<div class="fav-btns"><button class="open" data-open="' + f.id + '">' + u.open
+        + '</button><button data-del="' + f.id + '">' + u.del + '</button></div></div>';
+    }).join('');
+    Array.prototype.forEach.call(list.querySelectorAll('[data-open]'), function (b) {
+      b.onclick = function () { openFav(b.getAttribute('data-open')); };
+    });
+    Array.prototype.forEach.call(list.querySelectorAll('[data-del]'), function (b) {
+      b.onclick = function () { removeFav(b.getAttribute('data-del')); };
+    });
+  }
   function setLang(l) {
     lang = l;
     try { localStorage.setItem('bechy-lang', l); } catch (e) {}
-    renderLabels(); renderChips();
+    renderLabels(); renderChips(); renderSaved();
     if (current) doGenerate(); // regenerate in the new language
   }
 
@@ -534,12 +608,16 @@ function generate(subTheme, lang) {
     }
   };
 
+  $('btn-save').onclick = function () { addFav(current); };
+  $('btn-saved-toggle').onclick = function () { $('saved-panel').classList.toggle('hidden'); renderSaved(); };
+
   // AI-expand: wired in Task 3. Stub keeps Task 2 self-contained.
   if (typeof window.initAI !== 'function') window.initAI = function () {};
 
-  renderLabels(); renderChips();
+  renderLabels(); renderChips(); renderSaved();
   window.initAI(lang, function () { return current; }, toast);
-  window.__bechy = { getLang: function () { return lang; }, getResult: function () { return current; } };
+  window.__bechy = { getLang: function () { return lang; }, getResult: function () { return current; },
+                     favCount: function () { return loadFavs().length; } };
 })();
 </script>
 </body>
