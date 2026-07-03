@@ -344,6 +344,9 @@ function generate(subTheme, lang) {
     var extra = document.getElementById('ai-extra');
 
     function tryLocal() {
+      // An https page cannot call http://localhost (mixed content) — skip the probe
+      // to keep the console clean; the tunnel transport handles the hosted case.
+      if (location.protocol === 'https:') return Promise.resolve(false);
       var ctl = new AbortController();
       var t = setTimeout(function () { ctl.abort(); }, 1500);
       return fetch(LOCAL + '/api/tags', { signal: ctl.signal })
