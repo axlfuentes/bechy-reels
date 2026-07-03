@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reels da Bechy</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B8%3C/text%3E%3C/svg%3E">
+<style>
+  :root { --bg:#0e0f12; --card:#17191f; --line:rgba(255,255,255,.08); --txt:#f2f3f5; --mut:#9aa3ad; --acc:#f6a821; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { background:var(--bg); color:var(--txt); font-family:system-ui,'Segoe UI',Roboto,sans-serif; padding:16px; max-width:560px; margin:0 auto; }
+  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  h1 { font-size:1.15rem; letter-spacing:.3px; } h1 span { color:var(--acc); }
+  .lang { display:flex; border:1px solid var(--line); border-radius:20px; overflow:hidden; }
+  .lang button { background:transparent; color:var(--mut); border:0; padding:6px 14px; font-size:.8rem; font-weight:700; cursor:pointer; }
+  .lang button.on { background:var(--acc); color:#1a1203; }
+  #chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .chip { border:1px solid var(--line); background:var(--card); color:var(--txt); border-radius:18px; padding:7px 12px; font-size:.8rem; cursor:pointer; }
+  .chip.on { border-color:var(--acc); color:var(--acc); }
+  .btn { display:block; width:100%; border:0; border-radius:12px; padding:13px; font-size:.95rem; font-weight:800; cursor:pointer; }
+  #btn-generate { background:var(--acc); color:#1a1203; margin-bottom:14px; }
+  .block { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .block h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--mut); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+  .copy { border:1px solid var(--line); background:transparent; color:var(--mut); border-radius:8px; padding:3px 10px; font-size:.7rem; cursor:pointer; }
+  .block ul { list-style:none; } .block li { padding:4px 0; font-size:.9rem; }
+  .block li::before { content:'▸ '; color:var(--acc); }
+  #idea-what { font-size:.95rem; margin-bottom:8px; line-height:1.4; }
+  #caption-text, #hashtags-text { font-size:.88rem; line-height:1.45; color:var(--txt); word-break:break-word; }
+  .row { display:flex; gap:8px; margin:12px 0; flex-wrap:wrap; }
+  .row .btn { flex:1; min-width:130px; background:var(--card); color:var(--txt); border:1px solid var(--line); font-weight:600; font-size:.82rem; padding:10px; }
+  #btn-share { border-color:var(--acc); color:var(--acc); }
+  #btn-ai { display:none; border-color:#7c5cff; color:#b9a7ff; }
+  #ai-extra:empty { display:none; }
+  #ai-extra { background:rgba(124,92,255,.08); border:1px solid rgba(124,92,255,.35); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  #toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#222833; color:var(--txt); padding:9px 16px; border-radius:20px; font-size:.8rem; opacity:0; transition:opacity .25s; pointer-events:none; box-shadow:0 4px 14px rgba(0,0,0,.5); }
+  #toast.show { opacity:1; }
+  .hidden { display:none !important; }
+  footer { text-align:center; color:var(--mut); font-size:.68rem; margin-top:18px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Reels da <span>Bechy</span> 📸</h1>
+  <div class="lang">
+    <button id="lang-pt" class="on">PT</button>
+    <button id="lang-es">ES</button>
+  </div>
+</header>
+<div id="chips"></div>
+<button id="btn-generate" class="btn">Gerar ideia ✨</button>
+<div id="result" class="hidden">
+  <div class="block" id="idea-block">
+    <h2><span id="t-idea">Ideia</span><button class="copy" data-copy="idea">Copiar</button></h2>
+    <div id="idea-title" style="color:var(--acc);font-weight:700;font-size:.85rem;margin-bottom:6px;"></div>
+    <div id="idea-what"></div>
+    <ul id="idea-shots"></ul>
+  </div>
+  <div class="block" id="hooks-block">
+    <h2><span id="t-hooks">Ganchos</span><button class="copy" data-copy="hooks">Copiar</button></h2>
+    <ul id="hooks-list"></ul>
+  </div>
+  <div class="block" id="caption-block">
+    <h2><span id="t-caption">Caption</span><button class="copy" data-copy="caption">Copiar</button></h2>
+    <div id="caption-text"></div>
+  </div>
+  <div class="block" id="hashtags-block">
+    <h2><span id="t-hashtags">Hashtags</span><button class="copy" data-copy="hashtags">Copiar</button></h2>
+    <div id="hashtags-text"></div>
+  </div>
+  <div id="ai-extra"></div>
+  <div class="row">
+    <button id="btn-another" class="btn">🎲 Outra ideia</button>
+    <button id="btn-rehooks" class="btn">🔁 Outros ganchos</button>
+    <button id="btn-share" class="btn">📲 Compartilhar</button>
+    <button id="btn-ai" class="btn">✨ Expandir com IA</button>
+  </div>
+</div>
+<div id="toast"></div>
+<footer>feito com ❤ para Bechy · funciona offline</footer>
+<script>
+/*__CORE_START__*/
+var CONTENT = {
+  version: 1,
+  places: {
+    pt: ['este lugar', 'a praia', 'a serra', 'a cachoeira', 'o mirante', 'a trilha', 'a lagoa'],
+    es: ['este lugar', 'la playa', 'la montaña', 'la cascada', 'el mirador', 'el sendero', 'la laguna']
+  },
+  hours: {
+    pt: ['na golden hour', 'na hora azul', 'no amanhecer', 'no fim de tarde'],
+    es: ['en la golden hour', 'en la hora azul', 'al amanecer', 'al atardecer']
+  },
+  subthemes: [
+    { id: 'golden', icon: '🌅', name: { pt: 'Golden hour', es: 'Hora dorada' }, ideas: [
+      { what: { pt: 'Transição do dia: o mesmo enquadramento 1h antes, durante e depois da golden hour.', es: 'Transición del día: el mismo encuadre 1h antes, durante y después de la hora dorada.' },
+        shots: [
+          { pt: 'Tripé fixo: 3 clipes de 4s no mesmo enquadramento', es: 'Trípode fijo: 3 clips de 4s con el mismo encuadre' },
+          { pt: 'Close das cores mudando no céu', es: 'Primer plano de los colores cambiando en el cielo' },
+          { pt: 'Você de costas entrando no quadro', es: 'Tú de espaldas entrando al cuadro' },
+          { pt: 'Foto final com o resultado editado', es: 'Foto final con el resultado editado' } ] },
+      { what: { pt: 'Silhuetas na golden hour: pessoas, árvores ou pássaros contra o sol baixo.', es: 'Siluetas en la hora dorada: personas, árboles o pájaros contra el sol bajo.' },
+        shots: [
+          { pt: 'Sol baixo atrás do objeto, exposição no céu', es: 'Sol bajo detrás del objeto, exposición en el cielo' },
+          { pt: 'Movimento: alguém caminhando na silhueta', es: 'Movimiento: alguien caminando en la silueta' },
+          { pt: 'Detalhe do flare entre os dedos', es: 'Detalle del flare entre los dedos' } ] } ] },
+    { id: 'blue', icon: '🌌', name: { pt: 'Hora azul', es: 'Hora azul' }, ideas: [
+      { what: { pt: 'Cidade acendendo: o momento em que as luzes urbanas ganham do céu azul profundo.', es: 'La ciudad encendiéndose: el momento en que las luces urbanas superan al cielo azul profundo.' },
+        shots: [
+          { pt: 'Timelapse curto do céu escurecendo (2 min)', es: 'Timelapse corto del cielo oscureciendo (2 min)' },
+          { pt: 'Luzes da rua acendendo em close', es: 'Luces de la calle encendiéndose en primer plano' },
+          { pt: 'Plano aberto do skyline azul + dourado', es: 'Plano abierto del skyline azul + dorado' } ] },
+      { what: { pt: 'Hora azul na natureza: água espelhada e tons frios antes do amanhecer.', es: 'Hora azul en la naturaleza: agua espejada y tonos fríos antes del amanecer.' },
+        shots: [
+          { pt: 'Chegada no escuro com lanterna (POV)', es: 'Llegada a oscuras con linterna (POV)' },
+          { pt: 'Longa exposição da água lisa', es: 'Larga exposición del agua lisa' },
+          { pt: 'Revelação: primeiro raio de luz', es: 'Revelación: primer rayo de luz' },
+          { pt: 'Reação sua ao resultado na câmera', es: 'Tu reacción al resultado en la cámara' } ] } ] },
+    { id: 'reveal', icon: '📍', name: { pt: 'Lugar novo (reveal)', es: 'Lugar nuevo (reveal)' }, ideas: [
+      { what: { pt: 'Reveal com transição: caminho fechado → paisagem se abrindo de repente.', es: 'Reveal con transición: camino cerrado → paisaje abriéndose de repente.' },
+        shots: [
+          { pt: 'POV caminhando na trilha/estrada', es: 'POV caminando por el sendero/carretera' },
+          { pt: 'Mão afastando galhos (transição)', es: 'Mano apartando ramas (transición)' },
+          { pt: 'Drone ou plano aberto do lugar revelado', es: 'Dron o plano abierto del lugar revelado' },
+          { pt: 'Texto na tela: onde fica + melhor horário', es: 'Texto en pantalla: dónde queda + mejor horario' } ] },
+      { what: { pt: '“3 motivos para conhecer {lugar}” — mini-guia visual com suas melhores fotos.', es: '“3 razones para conocer {lugar}” — mini-guía visual con tus mejores fotos.' },
+        shots: [
+          { pt: 'Clipe 1: motivo 1 com texto na tela', es: 'Clip 1: razón 1 con texto en pantalla' },
+          { pt: 'Clipe 2: motivo 2 (ângulo diferente)', es: 'Clip 2: razón 2 (ángulo diferente)' },
+          { pt: 'Clipe 3: motivo 3 + foto final editada', es: 'Clip 3: razón 3 + foto final editada' } ] } ] },
+    { id: 'bts', icon: '🎬', name: { pt: 'Por trás da foto', es: 'Detrás de la foto' }, ideas: [
+      { what: { pt: 'Expectativa × realidade: o cenário caótico por trás de uma foto perfeita.', es: 'Expectativa × realidad: el caos detrás de una foto perfecta.' },
+        shots: [
+          { pt: 'A foto final primeiro (gancho visual)', es: 'La foto final primero (gancho visual)' },
+          { pt: 'Plano aberto mostrando o "truque" (posição, clima, bagunça)', es: 'Plano abierto mostrando el "truco" (posición, clima, desorden)' },
+          { pt: 'Você se ajeitando/errando takes', es: 'Tú acomodándote/fallando tomas' },
+          { pt: 'Lado a lado: bastidor × resultado', es: 'Lado a lado: detrás de cámara × resultado' } ] },
+      { what: { pt: 'Um dia de fotografia em 30 segundos: da mochila pronta à foto entregue.', es: 'Un día de fotografía en 30 segundos: de la mochila lista a la foto entregada.' },
+        shots: [
+          { pt: 'Arrumando o equipamento em timelapse', es: 'Preparando el equipo en timelapse' },
+          { pt: 'Deslocamento (carro/trilha) em cortes rápidos', es: 'Traslado (auto/sendero) en cortes rápidos' },
+          { pt: 'Momento do clique', es: 'El momento del clic' },
+          { pt: 'Edição no computador + resultado', es: 'Edición en la computadora + resultado' } ] } ] },
+    { id: 'gear', icon: '🎒', name: { pt: 'Equipamento & setup', es: 'Equipo & setup' }, ideas: [
+      { what: { pt: 'O que levo na mochila para fotografar paisagem — tour rápido item a item.', es: 'Qué llevo en la mochila para fotografiar paisaje — tour rápido ítem por ítem.' },
+        shots: [
+          { pt: 'Mochila fechada → aberta (transição)', es: 'Mochila cerrada → abierta (transición)' },
+          { pt: 'Cada item em close com texto (câmera, lentes, filtros, tripé)', es: 'Cada ítem en primer plano con texto (cámara, lentes, filtros, trípode)' },
+          { pt: 'O item "inesperado" que salva o dia', es: 'El ítem "inesperado" que salva el día' } ] },
+      { what: { pt: 'Celular × câmera no mesmo cenário: dá para notar a diferença?', es: 'Celular × cámara en el mismo escenario: ¿se nota la diferencia?' },
+        shots: [
+          { pt: 'Mesma cena clicada com os dois', es: 'La misma escena con ambos' },
+          { pt: 'Lado a lado sem dizer qual é qual', es: 'Lado a lado sin decir cuál es cuál' },
+          { pt: 'Revelação + sua opinião honesta', es: 'Revelación + tu opinión honesta' } ] } ] },
+    { id: 'edit', icon: '🎨', name: { pt: 'Antes → Depois (edição)', es: 'Antes → Después (edición)' }, ideas: [
+      { what: { pt: 'RAW cru → foto final: a transformação da edição em 3 toques principais.', es: 'RAW crudo → foto final: la transformación de la edición en 3 ajustes clave.' },
+        shots: [
+          { pt: 'Foto crua na tela (gancho: "saiu assim da câmera")', es: 'Foto cruda en pantalla (gancho: "así salió de la cámara")' },
+          { pt: 'Screen-record dos 3 ajustes principais', es: 'Screen-record de los 3 ajustes clave' },
+          { pt: 'Antes/depois com slider ou corte seco', es: 'Antes/después con slider o corte seco' } ] },
+      { what: { pt: 'A mesma foto, 3 estilos de edição: qual você escolheria?', es: 'La misma foto, 3 estilos de edición: ¿cuál elegirías?' },
+        shots: [
+          { pt: 'Versão 1: natural', es: 'Versión 1: natural' },
+          { pt: 'Versão 2: cinematográfica', es: 'Versión 2: cinematográfica' },
+          { pt: 'Versão 3: dramática + pergunta na tela', es: 'Versión 3: dramática + pregunta en pantalla' } ] } ] },
+    { id: 'clouds', icon: '⛅', name: { pt: 'Time-lapse de nuvens', es: 'Time-lapse de nubes' }, ideas: [
+      { what: { pt: 'Mar de nuvens em movimento: timelapse do vale/horizonte com nuvens correndo.', es: 'Mar de nubes en movimiento: timelapse del valle/horizonte con nubes corriendo.' },
+        shots: [
+          { pt: 'Setup do tripé (1 clipe rápido)', es: 'Setup del trípode (1 clip rápido)' },
+          { pt: 'Timelapse principal 8-10s', es: 'Timelapse principal 8-10s' },
+          { pt: 'Segundo ângulo ou zoom digital', es: 'Segundo ángulo o zoom digital' } ] },
+      { what: { pt: 'Tempestade chegando: o céu mudando de humor em 15 segundos.', es: 'Tormenta acercándose: el cielo cambiando de humor en 15 segundos.' },
+        shots: [
+          { pt: 'Céu limpo (início do timelapse)', es: 'Cielo despejado (inicio del timelapse)' },
+          { pt: 'Nuvens pesadas entrando', es: 'Nubes pesadas entrando' },
+          { pt: 'Primeiras gotas/você correndo (final com humor)', es: 'Primeras gotas/tú corriendo (final con humor)' } ] } ] },
+    { id: 'water', icon: '💧', name: { pt: 'Reflexos & água', es: 'Reflejos & agua' }, ideas: [
+      { what: { pt: 'Mundo espelhado: reflexos perfeitos em lagoa, poça ou praia molhada.', es: 'Mundo espejado: reflejos perfectos en laguna, charco o playa mojada.' },
+        shots: [
+          { pt: 'Câmera rente à água (ângulo baixo)', es: 'Cámara a ras del agua (ángulo bajo)' },
+          { pt: 'Vídeo invertido (o reflexo como "céu")', es: 'Video invertido (el reflejo como "cielo")' },
+          { pt: 'Pedra quebrando o espelho d\'água em slow motion', es: 'Piedra rompiendo el espejo de agua en cámara lenta' } ] },
+      { what: { pt: 'Longa exposição de cachoeira/mar: água de seda na câmera, passo a passo.', es: 'Larga exposición de cascada/mar: agua de seda en cámara, paso a paso.' },
+        shots: [
+          { pt: 'Cena normal (como o olho vê)', es: 'Escena normal (como la ve el ojo)' },
+          { pt: 'Colocando o filtro ND em close', es: 'Colocando el filtro ND en primer plano' },
+          { pt: 'Resultado: água de seda + settings na tela', es: 'Resultado: agua de seda + settings en pantalla' } ] } ] },
+    { id: 'hidden', icon: '🤫', name: { pt: 'Cantinho escondido', es: 'Rincón escondido' }, ideas: [
+      { what: { pt: 'O lugar que quase ninguém conhece: guia rápido de um spot secreto (sem entregar demais).', es: 'El lugar que casi nadie conoce: guía rápida de un spot secreto (sin revelar demasiado).' },
+        shots: [
+          { pt: 'Teaser do lugar sem mostrar tudo', es: 'Teaser del lugar sin mostrarlo todo' },
+          { pt: 'Como chegar em 3 passos (texto na tela)', es: 'Cómo llegar en 3 pasos (texto en pantalla)' },
+          { pt: 'A melhor foto possível do spot', es: 'La mejor foto posible del spot' },
+          { pt: 'CTA: "salva antes que lote"', es: 'CTA: "guárdalo antes de que se llene"' } ] },
+      { what: { pt: 'Turístico × escondido: o ponto famoso e o ângulo secreto a 50 metros dele.', es: 'Turístico × escondido: el punto famoso y el ángulo secreto a 50 metros.' },
+        shots: [
+          { pt: 'O clássico cheio de gente', es: 'El clásico lleno de gente' },
+          { pt: 'Caminhada curta até o ângulo alternativo', es: 'Caminata corta hasta el ángulo alternativo' },
+          { pt: 'A foto sem ninguém + comparação', es: 'La foto sin nadie + comparación' } ] } ] },
+    { id: 'tip', icon: '💡', name: { pt: 'Dica de foto & locação', es: 'Tip de foto & locación' }, ideas: [
+      { what: { pt: '1 dica que muda sua foto de paisagem (composição, luz ou clima) demonstrada ao vivo.', es: '1 tip que cambia tu foto de paisaje (composición, luz o clima) demostrado en vivo.' },
+        shots: [
+          { pt: 'Foto "errada" primeiro', es: 'La foto "mal" primero' },
+          { pt: 'A dica aplicada na prática (mesma cena)', es: 'El tip aplicado en la práctica (misma escena)' },
+          { pt: 'Antes/depois lado a lado', es: 'Antes/después lado a lado' } ] },
+      { what: { pt: 'Como achar locações incríveis perto de casa usando mapa + luz (mini tutorial).', es: 'Cómo encontrar locaciones increíbles cerca de casa usando mapa + luz (mini tutorial).' },
+        shots: [
+          { pt: 'Screen-record do mapa/satélite', es: 'Screen-record del mapa/satélite' },
+          { pt: 'Checando a direção do sol no app', es: 'Chequeando la dirección del sol en la app' },
+          { pt: 'Chegando no lugar + resultado', es: 'Llegando al lugar + resultado' } ] } ] }
+  ],
+  hooks: [
+    { pt: 'Ninguém filma {lugar} assim 👇', es: 'Nadie graba {lugar} así 👇' },
+    { pt: 'Você não vai acreditar como essa foto foi feita 🤯', es: 'No vas a creer cómo se hizo esta foto 🤯' },
+    { pt: 'O erro que TODO mundo comete ao fotografar {lugar}', es: 'El error que TODOS cometen al fotografiar {lugar}' },
+    { pt: 'Espera o final… vale a pena 😍', es: 'Espera el final… vale la pena 😍' },
+    { pt: 'Foi assim que eu consegui ESTA foto 📸', es: 'Así conseguí ESTA foto 📸' },
+    { pt: 'Eu só filmo {hora} — e este é o motivo', es: 'Solo grabo {hora} — y esta es la razón' },
+    { pt: 'Salva este lugar para a sua próxima viagem 📌', es: 'Guarda este lugar para tu próximo viaje 📌' },
+    { pt: 'Isto NÃO é edição pesada. É luz certa.', es: 'Esto NO es edición pesada. Es la luz correcta.' },
+    { pt: '3 segundos deste lugar e você entende tudo', es: '3 segundos de este lugar y lo entiendes todo' },
+    { pt: 'POV: você chegou cedo demais… ou na hora exata', es: 'POV: llegaste demasiado temprano… o justo a tiempo' },
+    { pt: 'A foto que quase não aconteceu 😅', es: 'La foto que casi no sucede 😅' },
+    { pt: 'Se você fotografa paisagem, PARA TUDO e vê isso', es: 'Si fotografías paisaje, DETENTE y mira esto' },
+    { pt: 'O segredo está nos primeiros 10 minutos de luz', es: 'El secreto está en los primeros 10 minutos de luz' },
+    { pt: 'Quanto custa esta foto? Menos do que você pensa', es: '¿Cuánto cuesta esta foto? Menos de lo que piensas' },
+    { pt: 'Eu esperei 2 horas por ESTES 10 segundos', es: 'Esperé 2 horas por ESTOS 10 segundos' },
+    { pt: 'Antes de editar × depois de editar 🎨', es: 'Antes de editar × después de editar 🎨' },
+    { pt: 'O que a câmera vê × o que o olho vê', es: 'Lo que ve la cámara × lo que ve el ojo' },
+    { pt: 'Este é o ângulo que ninguém te mostra', es: 'Este es el ángulo que nadie te muestra' },
+    { pt: 'Não precisa viajar longe para isto 👇', es: 'No necesitas viajar lejos para esto 👇' },
+    { pt: 'Meu lugar favorito? Fica a 40 minutos de casa', es: '¿Mi lugar favorito? Queda a 40 minutos de casa' },
+    { pt: 'A natureza não repete este show duas vezes', es: 'La naturaleza no repite este show dos veces' },
+    { pt: 'Fotógrafo de paisagem {hora}: uma rotina honesta', es: 'Fotógrafo de paisaje {hora}: una rutina honesta' },
+    { pt: 'Dica nº 1 para fotos de água de seda 💧', es: 'Tip nº 1 para fotos de agua de seda 💧' },
+    { pt: 'Isto foi filmado no CELULAR. Sério.', es: 'Esto fue grabado con el CELULAR. En serio.' },
+    { pt: 'O clima mudou tudo em 5 minutos ⛈️', es: 'El clima lo cambió todo en 5 minutos ⛈️' },
+    { pt: 'Se eu te mostrar onde fica, promete não lotar?', es: 'Si te muestro dónde queda, ¿prometes no llenarlo?' },
+    { pt: 'Composição em 3 passos — sem enrolação', es: 'Composición en 3 pasos — sin vueltas' },
+    { pt: 'A diferença entre foto boa e foto INCRÍVEL', es: 'La diferencia entre una foto buena y una INCREÍBLE' },
+    { pt: 'Por que suas fotos de pôr do sol ficam sem graça', es: 'Por qué tus fotos de atardecer quedan sin gracia' },
+    { pt: 'Eu voltei 3 vezes até acertar esta luz', es: 'Volví 3 veces hasta lograr esta luz' }
+  ],
+  captions: [
+    { pt: 'Tem lugares que não cabem em uma foto — precisei de um Reel inteiro. Salva para a sua próxima aventura 📌', es: 'Hay lugares que no caben en una foto — necesité un Reel entero. Guárdalo para tu próxima aventura 📌' },
+    { pt: 'A luz certa transforma qualquer lugar. Qual desses frames é o seu favorito? Comenta aqui 👇', es: 'La luz correcta transforma cualquier lugar. ¿Cuál de estos frames es tu favorito? Comenta aquí 👇' },
+    { pt: 'Acordar cedo dói, mas {hora} recompensa sempre. Segue para mais lugares assim ✨', es: 'Madrugar duele, pero {hora} siempre recompensa. Sígueme para más lugares así ✨' },
+    { pt: 'Bastidores honestos: nem sempre é glamour, mas o resultado paga cada passo. Compartilha com quem precisa ver isso 🔁', es: 'Detrás de cámaras honesto: no siempre es glamour, pero el resultado paga cada paso. Comparte con quien necesita verlo 🔁' },
+    { pt: 'Este é o tipo de lugar que me lembra por que comecei a fotografar. Salva e me conta: você iria? 📌', es: 'Este es el tipo de lugar que me recuerda por qué empecé a fotografiar. Guárdalo y cuéntame: ¿irías? 📌' },
+    { pt: 'Edição não é trapaça — é a metade da história. Quer ver o passo a passo completo? Comenta "QUERO" 👇', es: 'Editar no es trampa — es la mitad de la historia. ¿Quieres el paso a paso completo? Comenta "QUIERO" 👇' },
+    { pt: 'A natureza fez o show, eu só apertei o botão. Segue para não perder o próximo 🌿', es: 'La naturaleza hizo el show, yo solo apreté el botón. Sígueme para no perderte el próximo 🌿' },
+    { pt: 'Spot secreto desbloqueado 🤫 Salva antes que todo mundo descubra 📌', es: 'Spot secreto desbloqueado 🤫 Guárdalo antes de que todos lo descubran 📌' },
+    { pt: 'Uma dica simples, uma foto completamente diferente. Testa e me marca no resultado! 📸', es: 'Un tip simple, una foto completamente diferente. ¡Pruébalo y etiquétame en el resultado! 📸' },
+    { pt: 'Colecionando amanheceres — este entrou para o top 3 do ano. Segue a viagem por aqui ✨', es: 'Coleccionando amaneceres — este entró al top 3 del año. Sigue el viaje por aquí ✨' }
+  ],
+  hashtags: {
+    base: ['#fotografia', '#photography', '#reels', '#reelsinstagram', '#natureza', '#naturephotography'],
+    landscape: ['#paisagem', '#landscape', '#landscapephotography', '#goldenhour', '#sunset', '#bluehour', '#longexposure', '#mountains'],
+    travel: ['#viagem', '#travel', '#travelphotography', '#wanderlust', '#explore', '#trip'],
+    pt: ['#fotografiabrasil', '#brasilpaisagens', '#pordosol', '#amanhecer', '#dicasdefoto'],
+    es: ['#fotografiadepaisaje', '#atardecer', '#paisajes', '#viajeros', '#fotodeldia']
+  }
+};
+
+function _rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function _pickN(arr, n) {
+  var copy = arr.slice(), out = [];
+  while (out.length < n && copy.length) out.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0]);
+  return out;
+}
+function _t(item, lang) { return (item && (item[lang] || item.pt)) || ''; }
+function fillPlaceholders(text, lang) {
+  return String(text)
+    .replace(/\{lugar\}/g, _rand(CONTENT.places[lang] || CONTENT.places.pt))
+    .replace(/\{hora\}/g, _rand(CONTENT.hours[lang] || CONTENT.hours.pt));
+}
+function pickSubTheme(id) {
+  if (id) { for (var i = 0; i < CONTENT.subthemes.length; i++) if (CONTENT.subthemes[i].id === id) return CONTENT.subthemes[i]; }
+  return _rand(CONTENT.subthemes);
+}
+var _lastIdeaRef = null, _lastHookIdx = [];
+function rerollHooks(lang) {
+  var n = 3 + Math.floor(Math.random() * 3); // 3-5
+  var all = CONTENT.hooks.map(function (_, i) { return i; });
+  var fresh = all.filter(function (i) { return _lastHookIdx.indexOf(i) === -1; });
+  var chosen = _pickN(fresh.length >= n ? fresh : all, n);
+  _lastHookIdx = chosen;
+  return chosen.map(function (i) { return fillPlaceholders(_t(CONTENT.hooks[i], lang), lang); });
+}
+function buildHashtags(lang) {
+  var h = CONTENT.hashtags;
+  var set = h.base.concat(_pickN(h.landscape, 6), _pickN(h.travel, 5), _pickN(h[lang] || h.pt, 5));
+  var seen = {}, out = [];
+  for (var i = 0; i < set.length; i++) if (!seen[set[i]]) { seen[set[i]] = 1; out.push(set[i]); }
+  return out.slice(0, 22);
+}
+function generate(subTheme, lang) {
+  var st = subTheme || pickSubTheme(null);
+  var idea = _rand(st.ideas);
+  if (st.ideas.length > 1 && _lastIdeaRef === idea) idea = st.ideas[(st.ideas.indexOf(idea) + 1) % st.ideas.length];
+  _lastIdeaRef = idea;
+  return {
+    subThemeId: st.id,
+    subThemeName: _t(st.name, lang),
+    idea: {
+      what: fillPlaceholders(_t(idea.what, lang), lang),
+      shots: idea.shots.map(function (s) { return _t(s, lang); })
+    },
+    hooks: rerollHooks(lang),
+    caption: fillPlaceholders(_t(_rand(CONTENT.captions), lang), lang),
+    hashtags: buildHashtags(lang)
+  };
+}
+/*__CORE_END__*/
+</script>
+<script>
+// AI-expand — optional, local Ollama only. Hidden unless localhost:11434 responds.
+// On the https GitHub Pages URL the probe fails instantly (mixed content) -> button stays hidden.
+(function () {
+  var OLLAMA = 'http://localhost:11434';
+  var model = null;
+  window.initAI = function (lang, getResult, toast) {
+    var btn = document.getElementById('btn-ai');
+    var extra = document.getElementById('ai-extra');
+    function probe() {
+      var ctl = new AbortController();
+      var t = setTimeout(function () { ctl.abort(); }, 1500);
+      fetch(OLLAMA + '/api/tags', { signal: ctl.signal })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          clearTimeout(t);
+          if (d && d.models && d.models.length) { model = d.models[0].name; btn.style.display = 'block'; }
+        })
+        .catch(function () { clearTimeout(t); });
+    }
+    btn.onclick = function () {
+      var cur = getResult();
+      if (!cur || !model) return;
+      var isPt = (document.documentElement.lang || 'pt') === 'pt';
+      btn.disabled = true;
+      btn.textContent = isPt ? 'Gerando…' : 'Generando…';
+      var prompt = 'You help a landscape/travel/nature photographer make Instagram Reels. '
+        + 'Reel idea: "' + cur.subThemeName + ' — ' + cur.idea.what + '". '
+        + 'Respond ONLY with JSON: {"hooks": [5 short punchy hooks], "captions": [2 caption variations ending with a call-to-action]} '
+        + 'in ' + (isPt ? 'Brazilian Portuguese' : 'Spanish') + '.';
+      fetch(OLLAMA + '/api/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: model, prompt: prompt, stream: false, format: 'json' })
+      })
+        .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+        .then(function (d) {
+          var out = JSON.parse(d.response || '{}');
+          var hooks = Array.isArray(out.hooks) ? out.hooks : [];
+          var caps = Array.isArray(out.captions) ? out.captions : [];
+          if (!hooks.length && !caps.length) throw new Error('empty');
+          var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+          extra.innerHTML = '<h2 style="font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:#b9a7ff;margin-bottom:8px;">✨ '
+            + (isPt ? 'Extras da IA' : 'Extras de la IA') + '</h2>'
+            + (hooks.length ? '<ul>' + hooks.map(function (h) { return '<li>' + esc(h) + '</li>'; }).join('') + '</ul>' : '')
+            + caps.map(function (c) { return '<div style="margin-top:8px;font-size:.88rem;line-height:1.45;">' + esc(c) + '</div>'; }).join('');
+        })
+        .catch(function () { toast(isPt ? 'IA indisponível' : 'IA no disponible'); })
+        .finally(function () {
+          btn.disabled = false;
+          btn.textContent = isPt ? '✨ Expandir com IA' : '✨ Expandir con IA';
+        });
+    };
+    probe();
+  };
+})();
+</script>
+<script>
+(function () {
+  var UI = {
+    pt: { generate: 'Gerar ideia ✨', surprise: '🎲 Surpreenda-me', another: '🎲 Outra ideia',
+          rehooks: '🔁 Outros ganchos', share: '📲 Compartilhar', ai: '✨ Expandir com IA',
+          copy: 'Copiar', copied: 'Copiado ✓', idea: 'Ideia', what: 'O que gravar:',
+          hooks: 'Ganchos', caption: 'Caption', hashtags: 'Hashtags',
+          shareHint: 'Copiado — cola no Instagram 📲', title: 'Reels da <span>Bechy</span> 📸' },
+    es: { generate: 'Generar idea ✨', surprise: '🎲 Sorpréndeme', another: '🎲 Otra idea',
+          rehooks: '🔁 Otros ganchos', share: '📲 Compartir', ai: '✨ Expandir con IA',
+          copy: 'Copiar', copied: 'Copiado ✓', idea: 'Idea', what: 'Qué grabar:',
+          hooks: 'Ganchos', caption: 'Caption', hashtags: 'Hashtags',
+          shareHint: 'Copiado — pégalo en Instagram 📲', title: 'Reels de <span>Bechy</span> 📸' }
+  };
+  var lang = 'pt';
+  try { lang = localStorage.getItem('bechy-lang') || 'pt'; } catch (e) {}
+  if (lang !== 'pt' && lang !== 'es') lang = 'pt';
+  var selectedTheme = null;   // null => surprise (random)
+  var current = null;         // last generate() result
+
+  function $(id) { return document.getElementById(id); }
+  function toast(msg) {
+    var t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+  function copyText(text, okMsg) {
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta); toast(okMsg);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast(okMsg); }, fallback);
+    } else fallback();
+  }
+  function blockText(kind) {
+    if (!current) return '';
+    if (kind === 'idea') return current.subThemeName + ' — ' + current.idea.what + '\n' +
+      current.idea.shots.map(function (s) { return '- ' + s; }).join('\n');
+    if (kind === 'hooks') return current.hooks.join('\n');
+    if (kind === 'caption') return current.caption;
+    if (kind === 'hashtags') return current.hashtags.join(' ');
+    return '';
+  }
+  function renderChips() {
+    var u = UI[lang], html = '';
+    html += '<button class="chip' + (selectedTheme === null ? ' on' : '') + '" data-theme="">' + u.surprise + '</button>';
+    CONTENT.subthemes.forEach(function (st) {
+      html += '<button class="chip' + (selectedTheme === st.id ? ' on' : '') + '" data-theme="' + st.id + '">'
+            + st.icon + ' ' + _t(st.name, lang) + '</button>';
+    });
+    $('chips').innerHTML = html;
+    Array.prototype.forEach.call($('chips').children, function (btn) {
+      btn.onclick = function () {
+        selectedTheme = btn.getAttribute('data-theme') || null;
+        renderChips();
+        doGenerate();
+      };
+    });
+  }
+  function renderLabels() {
+    var u = UI[lang];
+    document.querySelector('header h1').innerHTML = u.title;
+    $('btn-generate').textContent = u.generate;
+    $('btn-another').textContent = u.another;
+    $('btn-rehooks').textContent = u.rehooks;
+    $('btn-share').textContent = u.share;
+    $('btn-ai').textContent = u.ai;
+    $('t-idea').textContent = u.idea; $('t-hooks').textContent = u.hooks;
+    $('t-caption').textContent = u.caption; $('t-hashtags').textContent = u.hashtags;
+    Array.prototype.forEach.call(document.querySelectorAll('.copy'), function (b) { b.textContent = u.copy; });
+    $('lang-pt').classList.toggle('on', lang === 'pt');
+    $('lang-es').classList.toggle('on', lang === 'es');
+    document.documentElement.lang = lang;
+  }
+  function renderResult() {
+    if (!current) return;
+    var u = UI[lang];
+    $('idea-title').textContent = current.subThemeName;
+    $('idea-what').innerHTML = '<strong>' + u.what + '</strong> ' + current.idea.what;
+    $('idea-shots').innerHTML = current.idea.shots.map(function (s) { return '<li>' + s + '</li>'; }).join('');
+    $('hooks-list').innerHTML = current.hooks.map(function (h) { return '<li>' + h + '</li>'; }).join('');
+    $('caption-text').textContent = current.caption;
+    $('hashtags-text').textContent = current.hashtags.join(' ');
+    $('ai-extra').innerHTML = '';
+    $('result').classList.remove('hidden');
+  }
+  function doGenerate() {
+    current = generate(selectedTheme ? pickSubTheme(selectedTheme) : null, lang);
+    renderResult();
+  }
+  function setLang(l) {
+    lang = l;
+    try { localStorage.setItem('bechy-lang', l); } catch (e) {}
+    renderLabels(); renderChips();
+    if (current) doGenerate(); // regenerate in the new language
+  }
+
+  $('lang-pt').onclick = function () { setLang('pt'); };
+  $('lang-es').onclick = function () { setLang('es'); };
+  $('btn-generate').onclick = doGenerate;
+  $('btn-another').onclick = doGenerate;
+  $('btn-rehooks').onclick = function () {
+    if (!current) return doGenerate();
+    current.hooks = rerollHooks(lang); renderResult();
+  };
+  Array.prototype.forEach.call(document.querySelectorAll('.copy'), function (b) {
+    b.onclick = function () { copyText(blockText(b.getAttribute('data-copy')), UI[lang].copied); };
+  });
+  $('btn-share').onclick = function () {
+    if (!current) return;
+    var text = current.caption + '\n\n' + current.hashtags.join(' ');
+    if (navigator.share) {
+      navigator.share({ text: text }).catch(function () {});
+    } else {
+      copyText(text, UI[lang].shareHint);
+    }
+  };
+
+  // AI-expand: wired in Task 3. Stub keeps Task 2 self-contained.
+  if (typeof window.initAI !== 'function') window.initAI = function () {};
+
+  renderLabels(); renderChips();
+  window.initAI(lang, function () { return current; }, toast);
+  window.__bechy = { getLang: function () { return lang; }, getResult: function () { return current; } };
+})();
+</script>
+</body>
+</html>
