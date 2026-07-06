@@ -24,6 +24,16 @@
   .copy { border:1px solid var(--line); background:transparent; color:var(--mut); border-radius:8px; padding:3px 10px; font-size:.7rem; cursor:pointer; }
   .block ul { list-style:none; } .block li { padding:4px 0; font-size:.9rem; }
   .block li::before { content:'▸ '; color:var(--acc); }
+  #money-block h2 { color:#f3c14b; }
+  #money-list li { display:block; padding:6px 0; font-size:.86rem; line-height:1.4; }
+  #money-list li::before { content:none; }
+  .net { display:inline-block; font-size:.6rem; font-weight:800; letter-spacing:.4px; text-transform:uppercase;
+         padding:2px 7px; border-radius:6px; margin-right:7px; vertical-align:middle; white-space:nowrap; }
+  .net-travelpayouts { background:rgba(246,168,33,.16); color:#f6a821; }
+  .net-adobe { background:rgba(124,92,255,.18); color:#b9a7ff; }
+  .net-amazon { background:rgba(255,153,0,.16); color:#ffb545; }
+  .net-bh { background:rgba(90,170,255,.16); color:#8fc2ff; }
+  #money-bio { font-size:.79rem; color:var(--mut); margin-top:8px; line-height:1.4; border-top:1px solid var(--line); padding-top:9px; }
   #idea-what { font-size:.95rem; margin-bottom:8px; line-height:1.4; }
   #caption-text, #hashtags-text { font-size:.88rem; line-height:1.45; color:var(--txt); word-break:break-word; }
   .row { display:flex; gap:8px; margin:12px 0; flex-wrap:wrap; }
@@ -79,6 +89,11 @@
   <div class="block" id="hashtags-block">
     <h2><span id="t-hashtags">Hashtags</span><button class="copy" data-copy="hashtags">Copiar</button></h2>
     <div id="hashtags-text"></div>
+  </div>
+  <div class="block" id="money-block">
+    <h2><span id="t-money">Monetização 💰</span><button class="copy" data-copy="money">Copiar</button></h2>
+    <ul id="money-list"></ul>
+    <div id="money-bio"></div>
   </div>
   <div id="ai-extra"></div>
   <div class="row">
@@ -271,6 +286,54 @@ var CONTENT = {
     travel: ['#viagem', '#travel', '#travelphotography', '#wanderlust', '#explore', '#trip'],
     pt: ['#fotografiabrasil', '#brasilpaisagens', '#pordosol', '#amanhecer', '#dicasdefoto'],
     es: ['#fotografiadepaisaje', '#atardecer', '#paisajes', '#viajeros', '#fotodeldia']
+  },
+  monetize: {
+    bio: {
+      pt: 'Junte todos os links afiliados num só link-da-bio (Linktree/Beacons) e fixe o principal nos comentários — é onde o Reel vira renda.',
+      es: 'Reúne todos los links de afiliado en un solo link-de-la-bio (Linktree/Beacons) y fija el principal en los comentarios — ahí el Reel se vuelve ingreso.'
+    },
+    angles: {
+      golden: [
+        { net: 'B&H', tip: { pt: 'Linke o filtro ND/polarizador e o tripé deste take (afiliado B&H/Amazon).', es: 'Enlaza el filtro ND/polarizador y el trípode de esta toma (afiliado B&H/Amazon).' } },
+        { net: 'Adobe', tip: { pt: 'Ofereça seu preset de golden hour como download afiliado (Adobe/Lightroom).', es: 'Ofrece tu preset de hora dorada como descarga afiliada (Adobe/Lightroom).' } }
+      ],
+      blue: [
+        { net: 'B&H', tip: { pt: 'Tripé firme + disparador remoto são essenciais na hora azul — link na bio.', es: 'Trípode firme + disparador remoto son clave en la hora azul — link en la bio.' } },
+        { net: 'Adobe', tip: { pt: 'Preset de tons frios (hora azul) como produto afiliado.', es: 'Preset de tonos fríos (hora azul) como producto afiliado.' } }
+      ],
+      reveal: [
+        { net: 'Travelpayouts', tip: { pt: 'Reels de "lugar" convertem em reservas: adicione hotéis/tours do destino (Travelpayouts).', es: 'Los Reels de "lugar" convierten en reservas: agrega hoteles/tours del destino (Travelpayouts).' } },
+        { net: 'Amazon', tip: { pt: 'A mochila/gimbal do POV rende link de compra na bio.', es: 'La mochila/gimbal del POV genera link de compra en la bio.' } }
+      ],
+      bts: [
+        { net: 'Amazon', tip: { pt: 'Todo equipamento que aparece vira lista de afiliados — um link por item.', es: 'Todo el equipo que aparece se vuelve lista de afiliados — un link por ítem.' } },
+        { net: 'Adobe', tip: { pt: 'Cite o software de edição do bastidor (Adobe afiliado).', es: 'Menciona el software de edición del detrás (Adobe afiliado).' } }
+      ],
+      gear: [
+        { net: 'B&H', tip: { pt: 'É o Reel que mais converte: kit completo com links afiliados B&H/Amazon.', es: 'Es el Reel que más convierte: kit completo con links afiliados B&H/Amazon.' } },
+        { net: 'Amazon', tip: { pt: 'O "item inesperado" é gatilho de compra por impulso — link direto.', es: 'El "ítem inesperado" es gatillo de compra impulsiva — link directo.' } }
+      ],
+      edit: [
+        { net: 'Adobe', tip: { pt: 'Reel de edição = venda de preset ou mini-curso Lightroom (Adobe afiliado).', es: 'Reel de edición = venta de preset o mini-curso Lightroom (Adobe afiliado).' } },
+        { net: 'Amazon', tip: { pt: 'Monitor/tablet de edição citado no vídeo com link afiliado.', es: 'Monitor/tablet de edición citado en el video con link afiliado.' } }
+      ],
+      clouds: [
+        { net: 'B&H', tip: { pt: 'Intervalômetro + tripé robusto sustentam o timelapse — link afiliado.', es: 'Intervalómetro + trípode robusto sostienen el timelapse — link afiliado.' } },
+        { net: 'Adobe', tip: { pt: 'LUT/preset de timelapse como extra afiliado.', es: 'LUT/preset de timelapse como extra afiliado.' } }
+      ],
+      water: [
+        { net: 'B&H', tip: { pt: 'O filtro ND é o herói do take de água de seda — link afiliado direto.', es: 'El filtro ND es el héroe de la toma de agua sedosa — link afiliado directo.' } },
+        { net: 'Amazon', tip: { pt: 'Pano de microfibra e capa de chuva: acessórios baratos, alta conversão.', es: 'Paño de microfibra y funda de lluvia: accesorios baratos, alta conversión.' } }
+      ],
+      hidden: [
+        { net: 'Travelpayouts', tip: { pt: '"Como chegar" + hospedagem próxima viram link de reservas (Travelpayouts).', es: '"Cómo llegar" + alojamiento cercano se vuelven link de reservas (Travelpayouts).' } },
+        { net: 'Amazon', tip: { pt: 'App de mapa offline e power bank para a trilha — links afiliados.', es: 'App de mapa offline y power bank para el sendero — links afiliados.' } }
+      ],
+      tip: [
+        { net: 'Travelpayouts', tip: { pt: 'Locação + onde ficar perto = link de reservas (Travelpayouts).', es: 'Locación + dónde quedarse cerca = link de reservas (Travelpayouts).' } },
+        { net: 'Adobe', tip: { pt: 'Transforme a dica num mini-curso ou preset (Adobe afiliado).', es: 'Convierte el tip en un mini-curso o preset (Adobe afiliado).' } }
+      ]
+    }
   }
 };
 
@@ -306,11 +369,17 @@ function buildHashtags(lang) {
   for (var i = 0; i < set.length; i++) if (!seen[set[i]]) { seen[set[i]] = 1; out.push(set[i]); }
   return out.slice(0, 22);
 }
+function buildMoney(id, lang) {
+  var m = CONTENT.monetize || { angles: {}, bio: { pt: '', es: '' } };
+  var angles = (m.angles[id] || []).map(function (x) { return { net: x.net, tip: _t(x.tip, lang) }; });
+  return { angles: angles, bio: _t(m.bio, lang) };
+}
 function generate(subTheme, lang) {
   var st = subTheme || pickSubTheme(null);
   var idea = _rand(st.ideas);
   if (st.ideas.length > 1 && _lastIdeaRef === idea) idea = st.ideas[(st.ideas.indexOf(idea) + 1) % st.ideas.length];
   _lastIdeaRef = idea;
+  var money = buildMoney(st.id, lang);
   return {
     subThemeId: st.id,
     subThemeName: _t(st.name, lang),
@@ -320,7 +389,9 @@ function generate(subTheme, lang) {
     },
     hooks: rerollHooks(lang),
     caption: fillPlaceholders(_t(_rand(CONTENT.captions), lang), lang),
-    hashtags: buildHashtags(lang)
+    hashtags: buildHashtags(lang),
+    money: money.angles,
+    moneyBio: money.bio
   };
 }
 /*__CORE_END__*/
@@ -438,6 +509,7 @@ function generate(subTheme, lang) {
           rehooks: '🔁 Outros ganchos', share: '📲 Compartilhar', ai: '✨ Expandir com IA',
           copy: 'Copiar', copied: 'Copiado ✓', idea: 'Ideia', what: 'O que gravar:',
           hooks: 'Ganchos', caption: 'Caption', hashtags: 'Hashtags',
+          money: 'Monetização 💰',
           shareHint: 'Copiado — cola no Instagram 📲', title: 'Reels da <span>Bechy</span> 📸',
           save: '💾 Salvar', saved: '✓ Salvo', savedToggle: '⭐ Salvos', open: 'Abrir',
           del: '🗑', savedEmpty: 'Nenhuma ideia salva ainda. Gere uma e toque em 💾 Salvar.', removed: 'Removido' },
@@ -445,6 +517,7 @@ function generate(subTheme, lang) {
           rehooks: '🔁 Otros ganchos', share: '📲 Compartir', ai: '✨ Expandir con IA',
           copy: 'Copiar', copied: 'Copiado ✓', idea: 'Idea', what: 'Qué grabar:',
           hooks: 'Ganchos', caption: 'Caption', hashtags: 'Hashtags',
+          money: 'Monetización 💰',
           shareHint: 'Copiado — pégalo en Instagram 📲', title: 'Reels de <span>Bechy</span> 📸',
           save: '💾 Guardar', saved: '✓ Guardado', savedToggle: '⭐ Guardados', open: 'Abrir',
           del: '🗑', savedEmpty: 'Aún no hay ideas guardadas. Genera una y toca 💾 Guardar.', removed: 'Eliminado' }
@@ -479,8 +552,11 @@ function generate(subTheme, lang) {
     if (kind === 'hooks') return current.hooks.join('\n');
     if (kind === 'caption') return current.caption;
     if (kind === 'hashtags') return current.hashtags.join(' ');
+    if (kind === 'money') return (current.money || []).map(function (a) { return a.net + ': ' + a.tip; }).join('\n')
+      + (current.moneyBio ? '\n\n' + current.moneyBio : '');
     return '';
   }
+  function netClass(n) { return String(n).toLowerCase().replace(/[^a-z]/g, ''); }
   function renderChips() {
     var u = UI[lang], html = '';
     html += '<button class="chip' + (selectedTheme === null ? ' on' : '') + '" data-theme="">' + u.surprise + '</button>';
@@ -508,6 +584,7 @@ function generate(subTheme, lang) {
     $('btn-ai').textContent = u.ai;
     $('t-idea').textContent = u.idea; $('t-hooks').textContent = u.hooks;
     $('t-caption').textContent = u.caption; $('t-hashtags').textContent = u.hashtags;
+    $('t-money').textContent = u.money;
     Array.prototype.forEach.call(document.querySelectorAll('.copy'), function (b) { b.textContent = u.copy; });
     $('lang-pt').classList.toggle('on', lang === 'pt');
     $('lang-es').classList.toggle('on', lang === 'es');
@@ -522,6 +599,21 @@ function generate(subTheme, lang) {
     $('hooks-list').innerHTML = current.hooks.map(function (h) { return '<li>' + h + '</li>'; }).join('');
     $('caption-text').textContent = current.caption;
     $('hashtags-text').textContent = current.hashtags.join(' ');
+    // Monetization — derive on the fly for older saved favorites that predate this field
+    if ((!current.money || !current.money.length) && current.subThemeId) {
+      var mm = buildMoney(current.subThemeId, lang);
+      current.money = mm.angles; current.moneyBio = mm.bio;
+    }
+    var mBlock = $('money-block');
+    if (current.money && current.money.length) {
+      $('money-list').innerHTML = current.money.map(function (a) {
+        return '<li><span class="net net-' + netClass(a.net) + '">' + esc(a.net) + '</span>' + esc(a.tip) + '</li>';
+      }).join('');
+      $('money-bio').textContent = current.moneyBio || '';
+      mBlock.classList.remove('hidden');
+    } else {
+      mBlock.classList.add('hidden');
+    }
     $('ai-extra').innerHTML = '';
     $('result').classList.remove('hidden');
   }
@@ -546,8 +638,8 @@ function generate(subTheme, lang) {
     if (favs.some(function (f) { return favSig(f) === sig; })) { toast(UI[lang].saved); return; }
     favs.unshift({ id: 's' + (favs.length ? (parseInt(favs[0].id.slice(1), 10) + 1) : 1) + '_' + sig.length,
                    ts: new Date().toISOString().slice(0, 10), lang: lang,
-                   subThemeName: r.subThemeName, idea: r.idea, hooks: r.hooks,
-                   caption: r.caption, hashtags: r.hashtags });
+                   subThemeId: r.subThemeId, subThemeName: r.subThemeName, idea: r.idea, hooks: r.hooks,
+                   caption: r.caption, hashtags: r.hashtags, money: r.money, moneyBio: r.moneyBio });
     saveFavs(favs); renderSaved(); toast(UI[lang].saved);
   }
   function removeFav(id) {
@@ -557,8 +649,9 @@ function generate(subTheme, lang) {
   function openFav(id) {
     var f = loadFavs().filter(function (x) { return x.id === id; })[0];
     if (!f) return;
-    current = { subThemeId: '', subThemeName: f.subThemeName, idea: f.idea,
-                hooks: f.hooks, caption: f.caption, hashtags: f.hashtags };
+    current = { subThemeId: f.subThemeId || '', subThemeName: f.subThemeName, idea: f.idea,
+                hooks: f.hooks, caption: f.caption, hashtags: f.hashtags,
+                money: f.money, moneyBio: f.moneyBio };
     renderResult();
     document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
